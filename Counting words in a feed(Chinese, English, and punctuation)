@@ -1,0 +1,49 @@
+import feedparser # package to parse rss
+import re # package to match regular expression
+
+def getwordscount(url):
+    d = feedparser.parse(url)
+    sum = 0 # sum for all the words
+    sum_en = 0
+    sum_zh = 0
+    sum_punc = 0
+    wordcount_zh = {} # dict to store chinese and its frequency
+    wordcount_en = {}
+    wordcount_punc = {}
+    for e in d['entries']:
+        if 'summary' in e:# every entry should have a 'summary' or a 'description'
+            summary = e.summary
+        else:
+            summary = e.description
+
+        words_zh, words_en, words_punc = getwords(e.title + ' ' + summary)
+        for word in words_zh:
+            wordcount_zh.setdefault(word, 0)#to set a dict[item] to default 0 if it doesn't exist
+            wordcount_zh[word] += 1
+            sum_zh += 1
+        for word in words_en:
+            wordcount_en.setdefault(word, 0)
+            wordcount_en[word] += 1
+            sum_en += 1
+        for word in words_punc:
+            wordcount_punc.setdefault(word, 0)
+            wordcount_punc[word] += 1
+            sum_punc += 1
+    sum = sum_zh + sum_en + sum_punc
+    wordcount_zh = sorted(wordcount_zh.items(), key = lambda d:d[1], reverse = True)# sort the dict with the value, and from the largest to smallest
+    wordcount_en = sorted(wordcount_en.items(), key = lambda d:d[1], reverse = True)
+    wordcount_punc = sorted(wordcount_punc.items(), key = lambda d:d[1], reverse = True)
+    print (d['feed']['title'])
+    print ('Chinese: %d \n %s'%(sum_zh, wordcount_zh))
+    print ('English: %d \n %s'%(sum_en, wordcount_en))
+    print ('Punctuation: %d \n %s'%(sum_punc, wordcount_punc))
+    print ('There are %d words in total'%(sum))
+
+def getwords(html):
+    txt = re.compile(r'<[^>]+>').sub(' ', html)# re to replace '<title><\title>' and so on with backspace
+    words_zh = re.compile(r'[\u4E00-\u9FFA]').findall(txt)# chinese character is between \u4E00-\u9FFA
+    words_en = re.compile(r'[A-Za-z]+').findall(txt)
+    words_punc = re.compile(r'[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+').findall(txt)
+    return words_zh, words_en, words_punc
+
+(getwordscount('http://feed.cnblogs.com/blog/u/426928/rss'))
