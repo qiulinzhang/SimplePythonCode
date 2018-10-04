@@ -1,0 +1,32 @@
+#### 1. 准备知识
+1.1 网址访问的基本知识：[http协议详解](https://www.jianshu.com/p/237fc9b2c8fd)
+1.2 request包的使用：[request官网 quickstart](http://www.python-requests.org/en/master/user/quickstart/)
+#### 2. 思路：
+将批量网址存在一个 txt 文件中，逐行读取，对每一行网址使用  `requests.get(url, timeout)`进行访问，如果能够正常访问，则返回一个`status_code`为 200，并将可以访问的网址存到文件中，其他的`status_code`值或者无法访问产生的异常均视为非正常访问，代码如下：
+#### 3. 代码：
+```
+# encoding: utf-8
+import requests
+
+def netcheck(url):
+    try:
+        r = requests.get(url, timeout = 1)
+        status_code = r.status_code
+        return status_code
+    except Exception as e:
+        return e
+
+if __name__ == "__main__":
+    with open("feedlist.txt") as f:
+        try:
+            for line in f:
+                status = netcheck(line.strip()) # strip() to remove blankspace or line break
+                if status == 200:
+                    print(line.strip() + ': successful')
+                    with open('valid_feedlist.txt', 'a') as f1:
+                        f1.write(line)
+                else:
+                    print(line+': unsuccessful')
+        except Exception as e:
+            print e
+``` 
